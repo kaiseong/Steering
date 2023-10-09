@@ -51,17 +51,18 @@ bool ble_connected=false;
 void setup() {
   rm.begin();
   rm.zero_offset();
-  delay(10);
+  //delay(10);
+  rtos::ThisThread::sleep_for(10);
   rm.restart();
   do_nothing_cmd[0] = STATES_IDX::NOCHANGE;
   String init_cmd = "";
 
   Serial.begin(115200);
-  delay(100);//while(!Serial);
+  rtos::ThisThread::sleep_for(10);
+  while(!Serial);
 
   fsm.getCurrentState().update(do_nothing_cmd);
-
-  delay(100);
+  rtos::ThisThread::sleep_for(100);
 
   tick10ms.attach(&setFlag, 0.01); // 10ms
   threadFsm.start(taskFSM);

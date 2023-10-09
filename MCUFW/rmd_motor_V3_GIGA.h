@@ -18,7 +18,7 @@ using namespace mbed;
 
 #define CAN_LEN                            8
 
-#define BASIC_SPEED                         500
+#define BASIC_SPEED                         300
 
 #define CMD_READ_PID                        0x30
 #define CMD_WRITE_RAM_PID                   0x31

@@ -49,8 +49,7 @@ public:
 /*****declare ready state*****/
 /*****************************/ 
 class readyState:public State{
-    
-    // bool ready_flag;
+    uint16_t check_cnt;
 public:
     readyState(RMDmotor&& rm, STATES_IDX idx): State(std::move(rm), idx){}
     virtual void update(byte* cmd);
@@ -127,6 +126,8 @@ class constState:public State{
     int32_t target_amp;
 
     bool center_flag;
+    uint8_t check_cnt;
+    uint8_t check_cnt2;
 
 public:
     constState(RMDmotor&& rm, STATES_IDX idx):
@@ -168,7 +169,7 @@ class sineState:public State{
     // int64_t init_mult_angle;
 
     bool offset_flag;
-    
+    uint8_t check_cnt;
 public:
     sineState(RMDmotor&& rm, STATES_IDX idx):
         State(std::move(rm), idx),

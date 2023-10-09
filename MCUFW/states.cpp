@@ -88,8 +88,8 @@ void l2lState::run(){
     }
     else {
         rm->setZeroMultAngle();
-        //rm->pauseMotor();
-        rm->torqueControl2(CMD_MOTOR_DIR_CW, 0); // to smooth 
+        rm->pauseMotor();
+        //rm->torqueControl1(0); // to smooth 
         
         terminate = true;
     }
@@ -127,6 +127,7 @@ void l2lState::cwCalibration()
 /*****************************/ 
 void readyState::update(byte* cmd) {
     terminate = false;
+    check_cnt=0;
     stateidx = STATES_IDX::IDX_GOREADY;
     
 }
@@ -137,8 +138,11 @@ void readyState::run(){
     if(!terminate){
         if((rm->getZeroMultAngle() - rm->getMultAngleRAW() > -ANGLE_TOLERANCE)&&
         (rm->getZeroMultAngle() - rm->getMultAngleRAW() < ANGLE_TOLERANCE)) {
-            //rm->torqueControl2(CMD_MOTOR_DIR_CW, 0);
-            terminate = true;
+            check_cnt++;
+            if(check_cnt > 100){
+                rm->torqueControl2(CMD_MOTOR_DIR_CW, 0);
+                terminate = true;
+            }
         }
         else{
             rm->absposControl(BASIC_SPEED, rm->getZeroMultAngle());
@@ -181,8 +185,8 @@ void constState::update(byte* cmd){
     target_cycle = cmd_cycle;
     target_amp = ((float)(rm->getCWLockAngle() - rm->getCCWLockAngle())) * ((float)cmd_range / (float)200.);
     uint32_t st_time=millis();
-    rm->restart();
-    while((millis()-st_time)<100);
+    check_cnt=0;
+    check_cnt2=0;
 }
 
 
@@ -218,7 +222,11 @@ void constState::run(){
                 if((rm->getZeroMultAngle() - rm->getMultAngleRAW() > -ANGLE_TOLERANCE)&&
                 (rm->getZeroMultAngle() - rm->getMultAngleRAW() < ANGLE_TOLERANCE)) {
                     // rm->posControl2(500,(int32_t)rm->getZeroMultAngle());
-                    terminate = true;
+                    check_cnt2++;
+                    if(check_cnt2 > 80){
+                      rm->torqueControl2(CMD_MOTOR_DIR_CW, 0);
+                      terminate = true;
+                    }
                 }
                 // else{
                 //     rm->speedControl2(direction, target_speed);
@@ -230,7 +238,9 @@ void constState::run(){
             rm->absposControl(BASIC_SPEED, rm->getZeroMultAngle() );
             if((rm->getZeroMultAngle() - rm->getMultAngleRAW() > -ANGLE_TOLERANCE)&&
             (rm->getZeroMultAngle() - rm->getMultAngleRAW() < ANGLE_TOLERANCE)){
-                center_flag = true;
+                check_cnt++;
+                if(check_cnt >100)
+                    center_flag = true;
             }
         }
     }
@@ -271,7 +281,9 @@ void sineState::update(byte * cmd){
     // direction = CMD_MOTOR_DIR_CW;
     terminate = false;
     pause = false;
-    
+
+    rm->restart();
+
     start_moment = millis();
     offset_flag = false;
     pause_time = 0; // 생성자에서 초기화 한 번하고 다시 한번.
@@ -289,11 +301,7 @@ void sineState::update(byte * cmd){
     //target_amp = ((rm->getCWLockAngle() - rm->getCCWLockAngle()))*((float)cmd_amp / (float)200);
     /*360/256deg /LSB*/
     target_amp = cmd_amp*GEAR_RATIO;
-    uint32_t st_time=millis();
-    rm->restart();
-    while((millis()-st_time)<100);
-    // init_mult_angle = rm->getCCWLockAngle() + target_offset;
-    // target_speed = 36000 * ((float)cmd_fq / (float)100);
+    check_cnt=0;
 }
 
 void sineState::run(){
@@ -308,7 +316,7 @@ void sineState::run(){
             if((cur_time+10)*target_fq < (uint32_t)target_cycle*1000000){ 
                 double tmp_target= target_offset+(target_amp*sin(2.0*M_PI*(float)target_fq/1000.*(float)cur_time/1000.));
                 rm->motioncontrol(tmp_target,(2.0*M_PI*(float)target_fq/1000.*target_amp*cos(2.0*M_PI*(float)target_fq/1000.*(float)cur_time/1000.)),
-                3./1000.*(double)target_fq+1.,14./100.*(double)target_fq+40);
+                25,70);
             }
             else{
                 terminate = true;
@@ -320,11 +328,11 @@ void sineState::run(){
             //rm->motioncontrol(target_offset,1,9,320);
             if((target_offset - rm->getMultAngleRAW() > -ANGLE_TOLERANCE)&&
             (target_offset - rm->getMultAngleRAW() < ANGLE_TOLERANCE)){
-                offset_flag = true;
-                start_moment = millis(); //start_moment = millis()+10;
-                uint32_t st_time=millis();
-                rm->restart();
-                while((millis()-st_time)<100);
+                check_cnt++;
+                if(check_cnt>100){
+                  offset_flag = true;
+                  start_moment = millis(); //start_moment = millis()+10;
+                }
             }
         }
     }
@@ -339,11 +347,7 @@ STATES_IDX sineState::getNextState(byte* cmd){
         stateidx = STATES_IDX::IDX_SINETERM;
         if(cmd[0] == STATES_IDX::IDX_SINE) update(cmd);
         else if(cmd[0] == STATES_IDX::IDX_GOREADY){
-            uint32_t st_time=millis();
-            rm->restart();
-            while((millis()-st_time)<100);
             rm->absposControl(BASIC_SPEED, rm->getZeroMultAngle());
-            //rm->motioncontrol(0,1,9,320);
             return STATES_IDX::IDX_GOREADY;
         
         }
