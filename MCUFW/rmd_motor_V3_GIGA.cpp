@@ -82,7 +82,12 @@ uint8_t RMDmotor::sendCMD(byte req[], byte res[])
     memcpy(txmsg.data, req, 8);
     uint8_t result = can.write(txmsg);
     if(result==0) return CAN_FAILED; 
-    while(!can.read(rxmsg));
+    uint32_t start_tmr=millis();
+    while(!can.read(rxmsg)){
+      if(millis()-start_tmr>200){
+        break;
+      }
+    }
     memcpy(res, rxmsg.data, CAN_LEN);
     return CAN_OK;
 }
@@ -171,8 +176,13 @@ uint8_t RMDmotor::RAW_motionControl(const uint16_t &p_des, const uint16_t &v_des
     memcpy(txmsg.data, frame_motion_control, CAN_LEN);
     uint8_t result = can.write(txmsg);
     if(result==0) return CAN_FAILED;
-    while (!can.read(rxmsg));
-    memcpy(res, rxmsg.data, sizeof(rxmsg.data));
+    uint32_t start_tmr=millis();
+    while(!can.read(rxmsg)){
+        if(millis()-start_tmr>200){
+            break;
+        }
+    }
+    //memcpy(res, rxmsg.data, sizeof(rxmsg.data));
     return result;
 }
 
@@ -272,4 +282,14 @@ void RMDmotor::showMotionState(){
   Serial.println(motion_state.vel);
   Serial.print("tor : ");
   Serial.println(motion_state.tor);
+}
+
+void RMDmotor::checking(int32_t b, int32_t c){
+    byte a[8]={0x00,};
+    *((int32_t *)(a)) = b;  
+    *((int32_t *)(a+4)) = c;
+    memcpy(txmsg.data, a, CAN_LEN);
+    txmsg.id=0x10;
+    can.write(txmsg);
+
 }

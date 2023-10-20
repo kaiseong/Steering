@@ -68,6 +68,7 @@ class Serial_Comm(QObject):
         encoder = self.cal_bytes(data[6:])
         # encoder = data[6:]
         # print(encoder)
+        print(encoder,torque)
         return encoder, torque
     
     def anglge_cal(self, data):

@@ -128,6 +128,7 @@ class constState:public State{
     bool center_flag;
     uint8_t check_cnt;
     uint8_t check_cnt2;
+    bool stop_flag=false;
 
 public:
     constState(RMDmotor&& rm, STATES_IDX idx):
@@ -164,12 +165,14 @@ class sineState:public State{
 
     uint16_t target_fq; //mHz
     uint8_t target_cycle;
-    uint8_t target_offset;
-    uint8_t target_amp;
+    int32_t target_offset;
+    int32_t target_amp;
     // int64_t init_mult_angle;
 
     bool offset_flag;
     uint8_t check_cnt;
+    uint8_t check_cnt2;
+    bool once;
 public:
     sineState(RMDmotor&& rm, STATES_IDX idx):
         State(std::move(rm), idx),

@@ -1,3 +1,13 @@
+# conda remove --name mbs --all
+# conda create -n mbs python=3.8.16
+# pip install PyQt5
+# pip install numpy
+# pip install pyserial
+# pip install pyqtchart
+# pip install can
+# pip install cantools
+
+
 import sys
 from PyQt5.QtGui import *
 from PyQt5.QtCore import pyqtSlot
@@ -408,10 +418,12 @@ class MyApp(QWidget):
         for value in self.Sine_Str_value:
             self.data.append(value.value())
         self.data[0] = 200 - int(self.data[0] * 2)  # offset
-        self.data[1] = int(self.data[1]/2)  # amp
+        #self.data[1] = int(self.data[1]/2)  # amp
+        self.data[1] = int(self.data[1])  # amp
         self.data[2] = int(self.data[2] * 100)  # hz
 
-        amp = self.data[1] * 2
+        #amp = self.data[1] * 2
+        amp = self.data[1]
         freq = self.data[2] / 100
         limit_speed = self.status.motor_speed / 2 / np.pi
 
@@ -422,7 +434,7 @@ class MyApp(QWidget):
         else:
             offset = self.data[0]
             amp = self.data[1] / 2.55
-            print(offset + amp)
+            # print(offset + amp)
 
             if offset + amp > 200 or offset - amp < 0:
                 msg = 'Please adjust the range of \"Init Angle\" and \"Amplitude\" to be Small.'

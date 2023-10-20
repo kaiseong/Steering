@@ -18,7 +18,7 @@ using namespace mbed;
 
 #define CAN_LEN                            8
 
-#define BASIC_SPEED                         300
+#define BASIC_SPEED                         100
 
 #define CMD_READ_PID                        0x30
 #define CMD_WRITE_RAM_PID                   0x31
@@ -75,7 +75,6 @@ typedef struct {
 
 class RMDmotor{
 private:
-
     uint16_t addr;
     uint32_t rxId;
     uint8_t rxLen;
@@ -187,6 +186,7 @@ public:
     void showMotionState();
     void print_frame(char frame[],char len);
     friend void print_frame(char frame[], char len);
+    void checking(int32_t b, int32_t c);
 /* util */
     // static uint16_t encoderDiff(const uint16_t & prev, const uint16_t & curr);
 };
