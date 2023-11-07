@@ -434,7 +434,7 @@ class MyApp(QWidget):
         else:
             offset = self.data[0]
             amp = self.data[1] / 2.55
-            # print(offset + amp)
+            # print(offset + modeamp)
 
             if offset + amp > 200 or offset - amp < 0:
                 msg = 'Please adjust the range of \"Init Angle\" and \"Amplitude\" to be Small.'
@@ -442,6 +442,7 @@ class MyApp(QWidget):
             else:
                 self.data = self.data[2:] + self.data[:2]
                 self.Serial.send_str(mode, self.data)
+                
     
     def set_btn(self): # make Button Return2zero & Emergency stop
         self.btn_goready = QPushButton("Return to Zero")
@@ -524,7 +525,7 @@ class MyApp(QWidget):
     def is_l2l_term(self):
         if self.status.MCU_status == self.status.disp_Mode.index("L2L Term") \
         and self.last_status != self.status.disp_Mode.index("L2L Term"):
-            print(self.status.MCU_status, self.last_status)
+            #print(self.status.MCU_status, self.last_status)
             msg = f'Are you sure L2L Values?\
                     \nLeft Lock : {min(self.status.ang_buff)}\
                     \nRight Lock : {max(self.status.ang_buff)}'
@@ -542,6 +543,7 @@ class MyApp(QWidget):
             "CCW Lock : %.2f (%.2f)"%(ccw, ccw - self.status.offset))
     
     def cal_value(self, status):
+        print(status[2])
         if status[2] == self.status.disp_Mode.index("L2L")\
         and self.last_status != self.status.disp_Mode.index("L2L")\
         and self.last_status != self.status.disp_Mode.index("Pause"):

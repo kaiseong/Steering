@@ -310,9 +310,9 @@ void sineState::update(byte * cmd){
     check_cnt=0;
     check_cnt2=0;
     once=false;
-    uint32_t st_time1=millis();
-    rm->restart();
-    while((millis()-st_time1)<10);
+    //uint32_t st_time1=millis();
+    //rm->restart();
+    //while((millis()-st_time1)<10);
 }
 
 void sineState::run(){
@@ -323,6 +323,10 @@ void sineState::run(){
       rm->updateMultAngle();
       if (offset_flag){ // offset position reached
           cur_time = millis()-start_moment-pause_time;
+          if(rm->getMultAngleRAW()> target_offset + target_amp*200 || rm->getMultAngleRAW() < target_offset - target_amp*200){
+            //terminate = true;
+            rm->restart();
+          }
           if((cur_time+10)*target_fq < (uint32_t)target_cycle*1000000){ 
               double tmp_target= target_offset/100.+(target_amp*sin(2.0*M_PI*(float)target_fq/1000.*(float)cur_time/1000.));
               double velocity = (2.0*M_PI*(float)target_fq/1000.*target_amp*cos(2.0*M_PI*(float)target_fq/1000.*(float)cur_time/1000.));
@@ -330,19 +334,26 @@ void sineState::run(){
           }
           else{
               terminate = true;
+              
               //offset_flag = true;
           }
       }
       else{ // go to the offset position
           //rm->absposControl(BASIC_SPEED,target_offset);
           rm->checking(rm->getMultAngleRAW(),target_offset );
-          rm->motioncontrol(target_offset/100,0,57,310);
+          rm->absposControl(BASIC_SPEED,target_offset);
+          //rm->motioncontrol(target_offset/100,0,57,310);
           if((target_offset - rm->getMultAngleRAW() > -ANGLE_TOLERANCE)&&
           (target_offset - rm->getMultAngleRAW() < ANGLE_TOLERANCE)){
               check_cnt++;
               if(check_cnt>100){
                 offset_flag = true;
+                
                 start_moment = millis(); //start_moment = millis()+10;
+                uint32_t st_time1=millis();
+                rm->restart();
+                while((millis()-st_time1)<10);
+                
               }
           }
       }
@@ -355,24 +366,20 @@ STATES_IDX sineState::getNextState(byte* cmd){
         return STATES_IDX::IDX_INIT;
         }
     if(terminate){
-        //rm->pauseMotor();
+        rm->pauseMotor();
         stateidx = STATES_IDX::IDX_SINETERM;
         if(cmd[0] == STATES_IDX::IDX_SINE) update(cmd);
         else if(cmd[0] == STATES_IDX::IDX_GOREADY){
-            if(!once){
-                rm->restart();
-                once=true;
-            }
-            else{
-              check_cnt2++;
-              if(check_cnt2>100){
+                  uint32_t st_time1=millis();
+                  rm->restart();
+                  while((millis()-st_time1)<50);
                   rm->absposControl(BASIC_SPEED, rm->getZeroMultAngle());
                   //rm->motioncontrol(rm->getZeroMultAngle(),0,57,310);
                   return STATES_IDX::IDX_GOREADY;
-              }
+              
             }
         }
-    }
+    
     else if(cmd[0] == STATES_IDX::IDX_PAUSE){
         pause = true; 
         stateidx = STATES_IDX::IDX_PAUSE;
@@ -391,3 +398,4 @@ STATES_IDX sineState::getNextState(byte* cmd){
     }
     return STATES_IDX::IDX_SINE;
 }
+
